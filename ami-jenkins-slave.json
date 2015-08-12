@@ -1,0 +1,42 @@
+{
+  "variables": {
+    "aws_access_key": "",
+    "aws_secret_key": "",
+    "aws_account_id": "",
+    "aws_x509_cert_path": "",
+    "aws_x509_key_path": "",
+    "aws_region": "",
+    "aws_source_ami": ""
+  },
+  "builders": [{
+    "name": "ubuntu-1404-hvm-is",
+    "source_ami": "{{user `aws_source_ami`}}",
+    "type": "amazon-instance",
+    "access_key": "{{user `aws_access_key`}}",
+    "secret_key": "{{user `aws_secret_key`}}",
+    "account_id": "{{user `aws_account_id`}}",
+    "x509_cert_path": "{{user `aws_x509_cert_path`}}",
+    "x509_key_path": "{{user `aws_x509_key_path`}}",
+    "x509_upload_path": "/var/tmp",
+    "s3_bucket": "ami-jenkins-slave-{{timestamp}}",
+    "region": "{{user `aws_region`}}",
+    "instance_type": "m3.medium",
+    "ssh_username": "ubuntu",
+    "ami_virtualization_type": "hvm",
+    "bundle_vol_command": "sudo -n bash -c 'export EC2_HOME=/var/tmp/ec2 ; export PATH=$PATH:/sbin:/usr/sbin:/usr/local/sbin:$EC2_HOME/bin ; ec2-bundle-vol -P mbr -k {{.KeyPath}} -u {{.AccountId}} -c {{.CertPath}} -r x86_64 -e /var/tmp/*,/tmp/* -p {{.Prefix}} --no-filter --no-filter --batch'",
+    "bundle_upload_command": "sudo -n bash -c 'export EC2_HOME=/var/tmp/ec2 ; export PATH=$PATH:/sbin:/usr/sbin:/usr/local/sbin:$EC2_HOME/bin ; ec2-upload-bundle -b {{.BucketName}} -m {{.ManifestPath}} -a {{user `aws_access_key`}} -s {{user `aws_secret_key`}} -d {{.BundleDirectory}} --batch --region {{.Region}} --retry'",
+    "ami_name": "ami-jenkins-slave-{{timestamp}}",
+    "run_tags": {
+      "Owner": "rzhilkib",
+      "Name": "packer-build--ami-jenkins-slave-{{timestamp}}"
+    },
+    "tags": {
+      "Owner": "rzhilkib"
+    }
+  }],
+  "provisioners": [{
+    "type": "shell",
+    "script": "provision.sh",
+    "execute_command": "{{ .Vars }} sudo -E /bin/bash '{{ .Path }}'"
+  }]
+}
